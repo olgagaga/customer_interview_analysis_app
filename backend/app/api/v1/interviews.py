@@ -11,8 +11,9 @@ router = APIRouter(prefix="/interviews")
 
 
 @router.post("", response_model=InterviewRead)
+
 def create_interview(payload: InterviewCreate, db: Session = Depends(get_db)):
-    analysis = analyze_text(payload.transcript)
+    analysis = analyze_text(payload.transcript, getattr(payload, "product_description", None))
     interview = Interview(title=payload.title, transcript=payload.transcript, analysis=analysis)
     db.add(interview)
     db.commit()
@@ -21,9 +22,11 @@ def create_interview(payload: InterviewCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/upload", response_model=InterviewRead)
+
 def create_interview_from_files(
     files: List[UploadFile] = File(...),
     title: Optional[str] = Form(None),
+    product_description: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ):
     if not files:
@@ -42,7 +45,7 @@ def create_interview_from_files(
     combined_text = "\n\n".join(texts)
     final_title = title or (files[0].filename if files and files[0].filename else "Uploaded Interview")
 
-    analysis = analyze_text(combined_text)
+    analysis = analyze_text(combined_text, product_description)
     interview = Interview(title=final_title, transcript=combined_text, analysis=analysis)
     db.add(interview)
     db.commit()
@@ -51,11 +54,13 @@ def create_interview_from_files(
 
 
 @router.get("", response_model=List[InterviewRead])
+
 def list_interviews(db: Session = Depends(get_db)):
     return db.query(Interview).order_by(Interview.id.desc()).all()
 
 
 @router.get("/{interview_id}", response_model=InterviewRead)
+
 def get_interview(interview_id: int, db: Session = Depends(get_db)):
     interview = db.get(Interview, interview_id)
     if not interview:

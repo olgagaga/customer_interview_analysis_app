@@ -2,37 +2,46 @@ import os
 from io import BytesIO
 from typing import Optional
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_core.prompts import PromptTemplate
-from langchain.chains.summarize import load_summarize_chain
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pypdf import PdfReader
 
 from app.core.config import settings
 
 
-ANALYSIS_MAP_PROMPT_TEMPLATE = """
-You are an expert product researcher. Analyze the following chunk of a customer interview transcript.
-Extract:
-- Key pain points
-- Jobs-to-be-done
-- Feature requests
-- Sentiment
-- Notable quotes (if any)
+INSIGHTS_PROMPT_TEMPLATE = """
+You are a customer interview analyst helping extract key insights from product-related customer conversations. Exclude information unrelated to the product.
 
-Chunk:
-"""
+Product: {product_description}
 
-ANALYSIS_COMBINE_PROMPT_TEMPLATE = """
-You are an expert product researcher. You will be given multiple partial analyses from chunks of the same interview.
-Synthesize a single, coherent, non-repetitive report with these sections:
-1) Summary (3-5 bullets)
-2) Pain points
-3) Jobs-to-be-done
-4) Feature requests
-5) Sentiment (overall and rationale)
-6) Key quotes (bullet list)
-7) Actionable insights (specific, prioritized)
+Task: Analyze the interview transcript and extract all relevant insights, classifying them by category:
+1. #pain — what the user dislikes, finds annoying, or difficult.
+2. #feature — requests for new features or improvements.
+3. #bug — what doesn't work or works incorrectly.
+4. #feedback — opinions about existing features (like/dislike).
+5. #insight — unexpected comments or hidden needs.
+
+Output format:
+- Each insight starts with a tag (e.g., #pain).
+- After the tag, a quote from the interview (verbatim or close to the original).
+- Then a brief interpretation (what exactly is the pain/request/problem).
+If there's emotional tone (frustration, enthusiasm), mention it in parentheses.
+
+Example:
+#pain "I constantly forget to save links, and then can't find them" – No convenient way to quickly save links (frustration).
+
+#feature "I’d like the bot to suggest categories for tasks" – Request for AI suggestions when creating tasks.
+
+#insight "I rarely use voice input because I’m afraid to make mistakes" – Hidden fear of errors when using voice input.
+
+Important:
+- Include even indirect complaints ("I have to copy manually" → #pain).
+- Note strong emotions (e.g., "This is just terrible!").
+- Don’t add generic phrases with no specifics.
+- Follow the example format exactly. Separate each insight with
+- Output only structured insights, no other text. \n\n.
+
+Interview transcript:
+{transcript}
 """
 
 
@@ -48,26 +57,26 @@ def _build_llm() -> ChatGoogleGenerativeAI:
     return ChatGoogleGenerativeAI(model=model, temperature=0.2)
 
 
-def analyze_text(text: str) -> Optional[str]:
+def analyze_text(text: str, product_description: Optional[str] = None) -> Optional[str]:
     if not text or not text.strip():
         return None
     try:
         llm = _build_llm()
-        splitter = RecursiveCharacterTextSplitter(chunk_size=4000, chunk_overlap=400)
-        docs = splitter.create_documents([text])
-
-        map_prompt = PromptTemplate(template=ANALYSIS_MAP_PROMPT_TEMPLATE, input_variables=[])
-        combine_prompt = PromptTemplate(template=ANALYSIS_COMBINE_PROMPT_TEMPLATE, input_variables=[])
-
-        chain = load_summarize_chain(
-            llm,
-            chain_type="map_reduce",
-            map_prompt=map_prompt,
-            combine_prompt=combine_prompt,
-            verbose=False,
+        product = (
+            product_description
+            or "Telegram bot for organizing tasks (save content by category, reminders, voice/text input)."
         )
-        result = chain.run(docs)
-        return result.strip() if isinstance(result, str) else str(result)
+        prompt = INSIGHTS_PROMPT_TEMPLATE.format(
+            product_description=product,
+            transcript=text.strip(),
+        )
+        result = llm.invoke(prompt)
+        content = getattr(result, "content", None)
+        if isinstance(content, str):
+            return content.strip()
+        if isinstance(result, str):
+            return result.strip()
+        return str(result).strip()
     except Exception:
         return None
 

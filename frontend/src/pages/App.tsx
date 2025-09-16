@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
+import { api } from '../services/api'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001'
 
 interface Interview {
   id: number
@@ -29,7 +30,7 @@ export default function App() {
   }
 
   async function fetchInterviews() {
-    const { data } = await axios.get<Interview[]>(`${API_BASE_URL}/api/v1/interviews`)
+    const { data } = await api.get<Interview[]>(`/api/v1/interviews`)
     setInterviews(data)
   }
 
@@ -52,13 +53,13 @@ export default function App() {
         formData.append('files', file)
       }
       if (productDescription.trim()) {
+        // Use product_description for analysis; optional title stays separate
+        formData.append('product_description', productDescription.trim())
         const compactTitle = productDescription.trim().slice(0, 120)
         formData.append('title', compactTitle)
       }
 
-      await axios.post(`${API_BASE_URL}/api/v1/interviews/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      await api.post(`/api/v1/interviews/upload`, formData)
 
       setSelectedFiles([])
       setProductDescription('')

@@ -8,7 +8,7 @@ class InterviewBase(BaseModel):
 
 
 class InterviewCreate(InterviewBase):
-    pass
+    product_description: str | None = None
 
 
 class InterviewRead(InterviewBase):
