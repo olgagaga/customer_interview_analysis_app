@@ -1,0 +1,1 @@
+# Deprecated: replaced by app.services.analysis using LangChain and ChatGoogleGenerativeAI 

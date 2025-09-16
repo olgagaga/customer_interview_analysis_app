@@ -1,0 +1,22 @@
+blog.pdf
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# IDE/editor
+.vscode/
+.idea/
+.DS_Store
