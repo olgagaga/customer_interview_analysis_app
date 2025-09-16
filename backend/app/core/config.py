@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/interviews"
 
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] | List[str] | str = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
+        "http://localhost:5433",
+        "http://127.0.0.1:5433",
     ]
 
     GEMINI_API_KEY: Optional[str] = None

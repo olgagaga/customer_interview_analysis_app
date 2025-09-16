@@ -55,7 +55,7 @@ Create environment files based on examples below.
   - `GEMINI_MODEL=gemini-1.5-flash`
 
 - Frontend (`frontend/.env.example`):
-  - `VITE_API_BASE_URL=http://localhost:8000`
+  - `VITE_API_BASE_URL=http://localhost:8001`
 
 ## Quickstart (Docker)
 
@@ -65,8 +65,8 @@ Create environment files based on examples below.
 2. Start services:
    - `docker compose up --build`
 3. Access:
-   - Frontend: `http://localhost:5173`
-   - Backend docs: `http://localhost:8000/docs`
+   - Frontend: `http://localhost:5433`
+   - Backend docs: `http://localhost:8001/docs`
 
 ## Run Backend only (Docker)
 
@@ -78,7 +78,7 @@ If you want just the API running (no frontend):
    - `docker compose up -d db backend`
 3. Verify:
    - `curl http://localhost:8000/health` → `{ "status": "ok" }`
-   - Open `http://localhost:8000/docs`
+   - Open `http://localhost:8001/docs`
 
 ## Local Development (without Docker)
 
@@ -114,15 +114,15 @@ Run database migrations (Alembic):
   - `alembic upgrade head`
 
 Run the server (from `backend/` directory):
-- `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
+- `uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload`
 
 Verify endpoints:
-- `curl http://localhost:8000/health` → `{ "status": "ok" }`
-- `curl http://localhost:8000/api/v1/interviews` → `[]` (HTTP 200)
-- Open API docs: `http://localhost:8000/docs`
+- `curl http://localhost:8001/health` → `{ "status": "ok" }`
+- `curl http://localhost:8001/api/v1/interviews` → `[]` (HTTP 200)
+- Open API docs: `http://localhost:8001/docs`
 
 Troubleshooting:
-- CORS: make sure `BACKEND_CORS_ORIGINS` includes `http://localhost:5173` (or your frontend origin). The backend already installs CORS middleware via `CORSMiddleware`.
+- CORS: make sure `BACKEND_CORS_ORIGINS` includes `http://localhost:5433` (or your frontend origin). The backend already installs CORS middleware via `CORSMiddleware`.
 - 404s: confirm you are requesting paths under the API prefix (e.g., `/api/v1/interviews`). Health check is at `/health`.
 - Database connection errors: verify Postgres is running and `DATABASE_URL` is correct.
 
